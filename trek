@@ -1,0 +1,182 @@
+import flet as ft
+
+
+async def main(page: ft.Page):
+    # Заголовок приложения.
+    page.title = "Habit Tracker"
+
+    # Выравниваем содержимое страницы по центру.
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+
+    # SharedPreferences позволяет сохранять данные
+    # даже после закрытия приложения.
+    prefs = ft.SharedPreferences()
+
+    # -----------------------------
+    # ЗАГРУЗКА СОХРАНЁННЫХ ДАННЫХ
+    # -----------------------------
+
+    # Загружаем количество дней.
+    saved_days = await prefs.get("habit_tracker.days")
+
+    # Если приложение запускается первый раз,
+    # сохранённого значения ещё нет.
+    if saved_days is None:
+        saved_days = 0
+
+    # Загружаем название привычки.
+    saved_name = await prefs.get("habit_tracker.name")
+
+    if saved_name is None:
+        saved_name = ""
+
+    # -----------------------------
+    # СОСТОЯНИЕ
+    # -----------------------------
+
+    state = {
+        "days": saved_days,
+        "goal": 21,
+    }
+
+    # -----------------------------
+    # ЭЛЕМЕНТЫ ИНТЕРФЕЙСА
+    # -----------------------------
+
+    # Поле ввода названия привычки.
+    habit_input = ft.TextField(
+        label="Название привычки",
+        value=saved_name,
+        width=320,
+    )
+
+    # Число внутри круга.
+    days_text = ft.Text(
+        f'{state["days"]} / {state["goal"]}',
+        size=32,
+        weight=ft.FontWeight.BOLD,
+    )
+
+    # Круг со счётчиком.
+    counter_circle = ft.Container(
+        width=220,
+        height=220,
+
+        # Помещаем текст внутрь круга.
+        content=days_text,
+
+        # Выравниваем текст по центру.
+        alignment=ft.Alignment.CENTER,
+
+        # Скругление в половину размера создаёт круг.
+        border_radius=110,
+
+        # Рамка вокруг круга.
+        border=ft.Border.all(
+            width=4,
+        ),
+    )
+
+    # -----------------------------
+    # СОХРАНЕНИЕ НАЗВАНИЯ
+    # -----------------------------
+
+    async def save_name(e):
+        # Получаем текст из поля.
+        name = (habit_input.value or "").strip()
+
+        # Сохраняем его.
+        await prefs.set(
+            "habit_tracker.name",
+            name,
+        )
+
+    # Сохраняем название,
+    # когда пользователь закончил ввод.
+    habit_input.on_blur = save_name
+
+    # -----------------------------
+    # КНОПКА +1
+    # -----------------------------
+
+    async def add_day(e):
+        # Не разрешаем увеличить число выше 21.
+        if state["days"] < state["goal"]:
+            state["days"] += 1
+
+        # Обновляем число на экране.
+        days_text.value = (
+            f'{state["days"]} / {state["goal"]}'
+        )
+
+        # Сохраняем новое значение.
+        await prefs.set(
+            "habit_tracker.days",
+            state["days"],
+        )
+
+    # -----------------------------
+    # КНОПКА СБРОСА
+    # -----------------------------
+
+    async def reset_days(e):
+        # Возвращаем количество дней к нулю.
+        state["days"] = 0
+
+        # Обновляем текст.
+        days_text.value = (
+            f'0 / {state["goal"]}'
+        )
+
+        # Сохраняем ноль.
+        await prefs.set(
+            "habit_tracker.days",
+            0,
+        )
+
+    # -----------------------------
+    # СОБИРАЕМ СТРАНИЦУ
+    # -----------------------------
+
+    page.add(
+        ft.Column(
+            controls=[
+                habit_input,
+
+                ft.Container(
+                    height=30,
+                ),
+
+                counter_circle,
+
+                ft.Container(
+                    height=30,
+                ),
+
+                ft.Row(
+                    controls=[
+                        ft.Button(
+                            content="+1 день",
+                            on_click=add_day,
+                        ),
+
+                        ft.Button(
+                            content="Сбросить",
+                            on_click=reset_days,
+                        ),
+                    ],
+
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+            ],
+
+            horizontal_alignment=(
+                ft.CrossAxisAlignment.CENTER
+            ),
+
+            spacing=20,
+        )
+    )
+
+
+ft.run(main)

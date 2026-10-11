@@ -1,0 +1,203 @@
+import flet as ft
+
+
+def main(page: ft.Page):
+ # Заголовок приложения.
+ page.title = "Калькулятор"
+
+ # Выравниваем всё по центру.
+ page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+
+    # -----------------------------
+ # СОСТОЯНИЕ
+    # -----------------------------
+
+ # Здесь хранится выражение,
+ # которое пользователь набирает.
+ state = {
+ "expression": "",
+    }
+
+    # -----------------------------
+ # ЭКРАН КАЛЬКУЛЯТОРА
+    # -----------------------------
+
+    display = ft.TextField(
+        value="",
+
+        # Пользователь не вводит текст клавиатурой.
+        read_only=True,
+
+        width=320,
+
+        text_size=32,
+
+        text_align=ft.TextAlign.RIGHT,
+    )
+
+    # -----------------------------
+    # ОБЫЧНАЯ КНОПКА
+    # -----------------------------
+
+    def button_click(e):
+        # Получаем текст нажатой кнопки.
+        value = e.control.content
+
+        # Добавляем его к выражению.
+        state["expression"] += value
+
+        # Показываем выражение.
+        display.value = state["expression"]
+
+    # -----------------------------
+    # КНОПКА C
+    # -----------------------------
+
+    def clear_click(e):
+        # Полностью очищаем выражение.
+        state["expression"] = ""
+
+        # Очищаем экран.
+        display.value = ""
+
+    # -----------------------------
+    # КНОПКА =
+    # -----------------------------
+
+    def calculate_click(e):
+        try:
+            # Вычисляем математическое выражение.
+            result = eval(
+                state["expression"]
+            )
+
+            # Преобразуем результат в строку.
+            result = str(result)
+
+            # Показываем результат.
+            display.value = result
+
+            # Результат становится новым выражением.
+            # Благодаря этому можно продолжить вычисление.
+            state["expression"] = result
+
+        except:
+            # Если выражение неправильное.
+            display.value = "Ошибка"
+
+            state["expression"] = ""
+
+    # -----------------------------
+    # ФУНКЦИЯ СОЗДАНИЯ КНОПКИ
+    # -----------------------------
+
+    def make_button(text, handler=None):
+        # Если отдельный обработчик не указан,
+        # используем обычный button_click.
+        if handler is None:
+            handler = button_click
+
+        return ft.Button(
+            content=text,
+
+            width=70,
+
+            height=60,
+
+            on_click=handler,
+        )
+
+    # -----------------------------
+    # РЯД 1
+    # -----------------------------
+
+    row1 = ft.Row(
+        controls=[
+            make_button("7"),
+            make_button("8"),
+            make_button("9"),
+            make_button("/"),
+        ],
+
+        alignment=ft.MainAxisAlignment.CENTER,
+    )
+
+    # -----------------------------
+    # РЯД 2
+    # -----------------------------
+
+    row2 = ft.Row(
+        controls=[
+            make_button("4"),
+            make_button("5"),
+            make_button("6"),
+            make_button("*"),
+        ],
+
+        alignment=ft.MainAxisAlignment.CENTER,
+    )
+
+    # -----------------------------
+    # РЯД 3
+    # -----------------------------
+
+    row3 = ft.Row(
+        controls=[
+            make_button("1"),
+            make_button("2"),
+            make_button("3"),
+            make_button("-"),
+        ],
+
+        alignment=ft.MainAxisAlignment.CENTER,
+    )
+
+    # -----------------------------
+    # РЯД 4
+    # -----------------------------
+
+    row4 = ft.Row(
+        controls=[
+            make_button(
+                "C",
+                clear_click,
+            ),
+
+            make_button("0"),
+
+            make_button(
+                "=",
+                calculate_click,
+            ),
+
+            make_button("+"),
+        ],
+
+        alignment=ft.MainAxisAlignment.CENTER,
+    )
+
+    # -----------------------------
+    # СОБИРАЕМ КАЛЬКУЛЯТОР
+    # -----------------------------
+
+    page.add(
+        ft.Column(
+            controls=[
+                display,
+
+                row1,
+                row2,
+                row3,
+                row4,
+            ],
+
+            horizontal_alignment=(
+                ft.CrossAxisAlignment.CENTER
+            ),
+
+            spacing=10,
+        )
+    )
+
+
+ft.run(main)
